@@ -47,7 +47,7 @@ Verified locally: `npm run check` passes (lint, typecheck, 1 unit test, 1 E2E te
 
 - **CI has not run yet.** The workflow exists but there is no GitHub remote, so "passes in CI" from the phase's "Done when" list is still open until Adam pushes.
 - Nothing connects to the database yet; `DATABASE_URL` is unused until Phase 1.
-- `npm audit` reports 6 low/moderate advisories in transitive dependencies of the tooling; not addressed (the suggested fix is `npm audit fix --force`, which makes breaking changes).
+- `npm audit` reports 6 low/moderate advisories, all inside the `shadcn` CLI package (its `deepmerge` and `ts-morph` → `minimatch` dependencies). They cannot be fixed properly: `deepmerge` has no patched release, and the offered `npm audit fix --force` downgrades `shadcn` to 1.0.0. The app only imports one stylesheet from that package (`shadcn/tailwind.css`) at build time, so `shadcn` was moved to `devDependencies`; `npm audit --omit=dev` (what ships to production) reports 0 vulnerabilities. Re-check when shadcn releases an update.
 
 ## Manual steps for Adam
 
