@@ -51,4 +51,4 @@ docker compose down -v    # stop and delete local data
 
 ## CI
 
-`.github/workflows/ci.yml` runs `npm run check` on every push and pull request, with a Postgres 17 service container.
+`.github/workflows/ci.yml` runs `npm run check` on every push, with a Postgres 17 service container.
