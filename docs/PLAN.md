@@ -36,7 +36,7 @@ is met, and tell me which manual steps I need to do.
 4. Write unit tests (Vitest) for all logic added in the phase.
 5. Write end-to-end tests (Playwright) for every user flow listed under the phase's "E2E tests".
 6. `npm run check` (lint, typecheck, unit tests, E2E tests) must pass before the phase is called done.
-7. Write `docs/progress/phase-N.md` with: what was built, decisions and deviations from the plan, tests added, how to run and verify, known gaps, manual steps for Adam.
+7. Write `docs/progress/phase-N.md` with: what was built, decisions and deviations from the plan, tests added, how to run and verify, known gaps, manual steps for Adam. Write the manual steps click by click, with the real URLs, file names, variable names and commands used in this project, and say how Adam can check each step worked.
 8. Update `README.md` when setup, scripts or environment variables change.
 9. Commit on a branch named `phase-N-<short-name>`; commit messages start with `phase N:`.
 10. If the plan is ambiguous or turns out to be wrong, stop and ask Adam. Record agreed changes in `docs/PLAN.md`.
@@ -142,7 +142,16 @@ CREATE TABLE workout_set (
 
 **E2E tests:** the home page loads and shows the app name.
 
-**Manual steps for Adam:** create a private GitHub repository and push.
+**Manual steps for Adam** (about 5 minutes, after Claude has finished the code)
+
+1. Create the repository.
+   - Go to github.com, click the "+" at the top right, then "New repository".
+   - Name it `workout-tracker`, set visibility to **Private**, and do not add a README, .gitignore or licence (the project already has them).
+   - Click "Create repository" and copy the repository URL shown on the next page.
+2. Push the code. In the project folder in the VS Code terminal, run:
+   - `git remote add origin <the URL you copied>`
+   - `git push -u origin main`
+3. Check CI. Open the repository on GitHub, click the "Actions" tab and wait for the run to finish with a green tick. If it is red, paste the error into the Claude session before closing it.
 
 **Done when:** `npm run check` passes locally and in CI, and `docs/progress/phase-0.md` exists.
 
@@ -206,10 +215,40 @@ CREATE TABLE workout_set (
 
 **Manual steps for Adam**
 
-- [ ] Create a Google OAuth client and add the local and production callback URLs.
-- [ ] Create a Neon project and copy the connection string.
-- [ ] Import the repository in Vercel and set `DATABASE_URL`, `AUTH_SECRET`, the Google client ID and secret, and `ALLOWED_EMAIL`.
-- [ ] Sign in on the production URL, then try a second Google account and confirm it is refused.
+Do these in order, about 30 minutes in total. Menu names on these sites change now and then; if a label differs, ask Claude in the session and it will look up the current one. Keep a temporary note open to paste the values into, and delete it at the end.
+
+1. Create the production database on Neon.
+   - Go to neon.com and sign up with your GitHub or Google account. No credit card is needed for the Free plan.
+   - Create a project named `workout-tracker`. Pick the region closest to you (Frankfurt) and leave the Postgres version at its default.
+   - On the project dashboard click "Connect" and copy the connection string that starts with `postgresql://`. This is your `DATABASE_URL`. Treat it like a password.
+2. Create the Google sign-in credentials.
+   - Go to console.cloud.google.com and sign in with the Google account you want to log in with.
+   - Create a new project named `workout-tracker` using the project selector at the top.
+   - Open "APIs & Services", then the OAuth consent screen (it may be called "Google Auth Platform"). Choose user type "External", enter the app name `Workout Tracker` and your email as support and contact address, and save.
+   - Leave the app in "Testing" status and add your own email under "Test users". This already blocks every other Google account at Google's side.
+   - Go to "Credentials" (or "Clients"), click "Create credentials", choose "OAuth client ID" and application type "Web application".
+   - Under "Authorised redirect URIs" add `http://localhost:3000/api/auth/callback/google`. You will add the production one in step 6.
+   - Click "Create" and copy the **Client ID** and **Client secret**.
+3. Fill in your local environment file.
+   - In the project folder, copy `.env.example` to `.env.local`.
+   - Set the Google client ID and secret, set `ALLOWED_EMAIL` to your Google email address, and generate `AUTH_SECRET` by running `openssl rand -base64 32` in the terminal and pasting the output.
+   - Leave the local `DATABASE_URL` pointing at the Docker database. Do not put the Neon string here.
+   - Run `npm run dev`, open `http://localhost:3000` and sign in with Google to confirm it works locally.
+4. Create the tables in the production database.
+   - In the terminal, run the migration once against Neon with the command Claude lists in `docs/progress/phase-2.md` (it passes the Neon connection string for this one command only).
+   - In the Neon dashboard, open "Tables" and check that `exercise`, `workout`, `workout_exercise` and `workout_set` exist.
+5. Deploy on Vercel.
+   - Go to vercel.com and sign up with your GitHub account, choosing the Hobby plan.
+   - Click "Add New", then "Project", and import the `workout-tracker` repository. Allow Vercel access to that repository when GitHub asks.
+   - Before clicking Deploy, open "Environment Variables" and add: `DATABASE_URL` (the Neon string), `AUTH_SECRET` (generate a new one, different from local), the Google client ID and secret, and `ALLOWED_EMAIL`. Use the exact variable names from `.env.example`.
+   - Click "Deploy" and wait for it to finish. Copy the production URL, which looks like `https://workout-tracker-xxxx.vercel.app`.
+6. Tell Google about the production URL.
+   - Back in the Google Cloud console, open your OAuth client and add a second redirect URI: `<your production URL>/api/auth/callback/google`. Save.
+7. Verify that only you can get in.
+   - Open the production URL on your phone and sign in with your Google account. You should land on the home page.
+   - Open the URL in a private browser window and try a different Google account. It must be refused.
+   - In the private window, paste a direct link such as `<your production URL>/history` without signing in. It must send you to the sign-in page.
+8. Clean up: delete the temporary note with the secrets. They now live only in `.env.local` (never committed) and in Vercel.
 
 **Done when:** the production URL works for Adam's account only, and CI is green.
 
@@ -247,7 +286,13 @@ CREATE TABLE workout_set (
 - A failed save shows the retry state and keeps the typed values.
 - Removing a set renumbers the remaining sets.
 
-**Manual steps for Adam:** log one real workout on the phone and note anything slow or awkward in `docs/progress/phase-3.md`.
+**Manual steps for Adam** (during your next real workout)
+
+1. Merge the phase branch into `main` on GitHub and wait until Vercel shows the new deployment as "Ready".
+2. On your phone, open the production URL and add it to your home screen: in the browser's share or menu button choose "Add to Home Screen".
+3. Log one complete, real workout in the gym: at least one exercise picked from the list, one new exercise added by typing, and three sets each.
+4. Close the browser, reopen the app and check every set is still there.
+5. Write down anything slow, fiddly or confusing, and how long logging one set took. Add these notes to `docs/progress/phase-3.md` under "Feedback from first real use" so the next session can act on them.
 
 **Done when:** a real workout can be logged on production from a phone.
 
@@ -360,9 +405,31 @@ If real workouts are being logged before the dashboards are built, run this phas
 
 **Manual steps for Adam**
 
-- [ ] Create the private backup repository and add the database URL and a repository token as GitHub Actions secrets.
-- [ ] Trigger the backup manually and check the dump appears.
-- [ ] Do one restore drill into a local database by following `docs/RESTORE.md`.
+Do these after Claude has finished the code, about 30 minutes in total.
+
+1. Create the backup repository.
+   - On github.com click "+", then "New repository". Name it `workout-tracker-backups`, set it to **Private**, tick "Add a README" so it has a first commit, and create it.
+2. Create a token that lets the backup job write to that repository only.
+   - On GitHub click your profile picture, then "Settings", "Developer settings", "Personal access tokens", "Fine-grained tokens", "Generate new token".
+   - Name it `workout-backup`. Set the longest expiry offered and put a reminder in your calendar a week before it ends; when it expires the backups stop until you replace it.
+   - Under "Repository access" choose "Only select repositories" and pick `workout-tracker-backups`.
+   - Under "Repository permissions" set "Contents" to "Read and write". Leave everything else untouched.
+   - Generate the token and copy it. It is shown only once.
+3. Get the database connection string for backups.
+   - In the Neon dashboard click "Connect" and copy the **direct** connection string (connection pooling switched off), which is the one `pg_dump` needs.
+4. Store both values as secrets in the app repository.
+   - Open the `workout-tracker` repository on GitHub, then "Settings", "Secrets and variables", "Actions", "New repository secret".
+   - Add the two secrets using the exact names Claude lists in `docs/progress/phase-6.md` (one for the database URL, one for the token).
+5. Run the first backup by hand.
+   - In the `workout-tracker` repository open the "Actions" tab, select the backup workflow on the left, click "Run workflow" and confirm.
+   - Wait for the green tick, then open `workout-tracker-backups` and check a dump file with today's date is there and is not empty.
+6. Do one restore drill. This is the step that proves the backups are usable.
+   - Download the newest dump file from the backup repository.
+   - In the project folder run `docker compose up -d`, then run the restore command from `docs/RESTORE.md` against the local database.
+   - Start the app with `npm run dev`, open the history page and compare three workouts with production. They must match.
+   - Note the date of the drill in `docs/RESTORE.md`.
+7. Check the automatic run. The next morning, open the backup repository and confirm a new dump appeared without you doing anything.
+8. Try the export button in the app once and open the downloaded file to see your workouts in it.
 
 **Done when:** a nightly dump has appeared on its own, and the restore drill succeeded.
 
