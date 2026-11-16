@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Workout Tracker
 
-## Getting Started
+A single-user, phone-first web app for logging workouts and seeing progress. Built with Next.js (App Router), Tailwind CSS, shadcn/ui and Postgres.
 
-First, run the development server:
+The implementation plan is in [docs/PLAN.md](docs/PLAN.md). Notes on each finished phase are in [docs/progress/](docs/progress/).
+
+## Requirements
+
+- Node.js 22 or newer (CI uses 24)
+- Docker, for the local Postgres database
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npx playwright install chromium   # browser for the E2E tests
+cp .env.example .env.local
+docker compose up -d              # Postgres on localhost:5432
+npm run dev                       # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Start the development server |
+| `npm run build` / `npm run start` | Production build and server |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | Generate Next.js route types and run `tsc --noEmit` |
+| `npm run test:unit` | Unit tests (Vitest), in `tests/unit/` |
+| `npm run test:e2e` | End-to-end tests (Playwright, mobile Chromium), in `tests/e2e/` |
+| `npm run check` | Lint, typecheck, unit tests and E2E tests; this is what CI runs |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`npm run test:e2e` builds and starts the app on port 3000 by itself. Outside CI it reuses a server already running on that port, so stop `npm run dev` first if you want the tests to run against a fresh production build.
 
-## Learn More
+## Environment variables
 
-To learn more about Next.js, take a look at the following resources:
+Copy `.env.example` to `.env.local`. All `.env*` files except `.env.example` are git-ignored.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | Used for |
+| --- | --- |
+| `DATABASE_URL` | Postgres connection string. The example value matches `docker-compose.yml`. Not read by the app until Phase 1. |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Database
 
-## Deploy on Vercel
+```bash
+docker compose up -d      # start
+docker compose down       # stop, keep data
+docker compose down -v    # stop and delete local data
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## CI
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`.github/workflows/ci.yml` runs `npm run check` on every push and pull request, with a Postgres 17 service container.
