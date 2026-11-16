@@ -38,7 +38,7 @@ is met, and tell me which manual steps I need to do.
 6. `npm run check` (lint, typecheck, unit tests, E2E tests) must pass before the phase is called done.
 7. Write `docs/progress/phase-N.md` with: what was built, decisions and deviations from the plan, tests added, how to run and verify, known gaps, manual steps for Adam. Write the manual steps click by click, with the real URLs, file names, variable names and commands used in this project, and say how Adam can check each step worked.
 8. Update `README.md` when setup, scripts or environment variables change.
-9. Commit on a branch named `phase-N-<short-name>`; commit messages start with `phase N:`.
+9. Do not run `git commit` or `git push`, and do not create branches or pull requests. Adam does all commits and pushes directly to `main`. When the phase is done, leave the changes uncommitted and suggest a commit message starting with `phase N:`.
 10. If the plan is ambiguous or turns out to be wrong, stop and ask Adam. Record agreed changes in `docs/PLAN.md`.
 11. Never run destructive commands against the production database. Migrations are additive: no dropping or renaming columns that hold data without a backup and Adam's approval.
 12. Keep it simple: no new dependency, abstraction or feature that this plan does not ask for.
@@ -288,7 +288,7 @@ Do these in order, about 30 minutes in total. Menu names on these sites change n
 
 **Manual steps for Adam** (during your next real workout)
 
-1. Merge the phase branch into `main` on GitHub and wait until Vercel shows the new deployment as "Ready".
+1. Commit the phase and push it to `main`, then wait until Vercel shows the new deployment as "Ready".
 2. On your phone, open the production URL and add it to your home screen: in the browser's share or menu button choose "Add to Home Screen".
 3. Log one complete, real workout in the gym: at least one exercise picked from the list, one new exercise added by typing, and three sets each.
 4. Close the browser, reopen the app and check every set is still there.

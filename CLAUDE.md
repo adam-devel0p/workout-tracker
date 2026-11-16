@@ -18,7 +18,7 @@ Read `docs/PLAN.md` and every file in `docs/progress/`. Work on one phase at a t
 6. `npm run check` (lint, typecheck, unit tests, E2E tests) must pass before the phase is called done.
 7. Write `docs/progress/phase-N.md` with: what was built, decisions and deviations from the plan, tests added, how to run and verify, known gaps, manual steps for Adam.
 8. Update `README.md` when setup, scripts or environment variables change.
-9. Commit on a branch named `phase-N-<short-name>`; commit messages start with `phase N:`.
+9. Do not run `git commit` or `git push`, and do not create branches or pull requests. Adam does all commits and pushes directly to `main`. When the phase is done, leave the changes uncommitted and suggest a commit message starting with `phase N:`.
 10. If the plan is ambiguous or turns out to be wrong, stop and ask Adam. Record agreed changes in `docs/PLAN.md`.
 11. Never run destructive commands against the production database. Migrations are additive: no dropping or renaming columns that hold data without a backup and Adam's approval.
 12. Keep it simple: no new dependency, abstraction or feature that this plan does not ask for.
